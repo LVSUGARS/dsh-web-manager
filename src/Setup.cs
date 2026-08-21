@@ -8,8 +8,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("DSH Web Manager Setup")]
 [assembly: AssemblyProduct("DSH Web Manager")]
 [assembly: AssemblyCompany("DSH Web Manager Community Build")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.1.1.0")]
+[assembly: AssemblyFileVersion("1.1.1.0")]
 
 namespace DSHWebManagerSetup
 {

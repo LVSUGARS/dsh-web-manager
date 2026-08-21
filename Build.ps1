@@ -31,11 +31,11 @@ Copy-Item -LiteralPath (Join-Path $root 'installer\Uninstall.ps1') -Destination 
 Copy-Item -LiteralPath (Join-Path $root 'installer\Install.cmd') -Destination $payload
 Copy-Item -LiteralPath (Join-Path $root 'installer\Install-DshRuntime.ps1') -Destination $payload
 
-$zip = Join-Path $release 'DSH-Web-Manager-1.1.0.zip'
+$zip = Join-Path $release 'DSH-Web-Manager-1.1.1.zip'
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path (Join-Path $payload '*') -DestinationPath $zip
 
-$setup = Join-Path $release 'DSH-Web-Manager-Setup-1.1.0.exe'
+$setup = Join-Path $release 'DSH-Web-Manager-Setup-1.1.1.exe'
 $payloadZip = Join-Path $build 'payload.zip'
 if (Test-Path -LiteralPath $payloadZip) { Remove-Item -LiteralPath $payloadZip -Force }
 Compress-Archive -Path (Join-Path $payload '*') -DestinationPath $payloadZip

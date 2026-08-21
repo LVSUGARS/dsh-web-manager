@@ -6,7 +6,7 @@ The application and installer use the black whale from the installed official DS
 
 ## Install
 
-Run `release\DSH-Web-Manager-Setup-1.1.0.exe`. Installation is per user and does not require administrator rights. A portable ZIP is provided beside it.
+Run `release\DSH-Web-Manager-Setup-1.1.1.exe`. Installation is per user and does not require administrator rights. A portable ZIP is provided beside it.
 
 When the official DSH CLI is missing, the manager offers one-click installation of a checksum-verified portable Node.js runtime and the official `@deepseek-ai/dsh` npm package. It never bundles another user's `%USERPROFILE%\.dsh`, credentials, or conversations.
 

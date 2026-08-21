@@ -16,8 +16,8 @@ using System.Windows.Forms;
 [assembly: System.Reflection.AssemblyTitle("DSH Web Manager")]
 [assembly: System.Reflection.AssemblyProduct("DSH Web Manager")]
 [assembly: System.Reflection.AssemblyCompany("DSH Web Manager Community Build")]
-[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.1.1.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.1.1.0")]
 
 namespace DSHWebManager
 {
@@ -173,7 +173,7 @@ namespace DSHWebManager
         {
             var request = (HttpWebRequest)WebRequest.Create("https://registry.npmjs.org/@deepseek-ai%2Fdsh/latest");
             request.Timeout = 15000;
-            request.UserAgent = "DSH-Web-Manager/1.1.0";
+            request.UserAgent = "DSH-Web-Manager/1.1.1";
             using (var response = request.GetResponse())
             using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
             {
@@ -553,9 +553,9 @@ namespace DSHWebManager
             dot.Location = new Point(21, 22); dot.Size = new Size(11, 11); statusCard.Controls.Add(dot);
             status.Location = new Point(43, 13); status.Size = new Size(330, 27); status.Font = new Font(Font.FontFamily, 11, FontStyle.Bold); statusCard.Controls.Add(status);
             detail.Location = new Point(43, 40); detail.Size = new Size(340, 22); detail.ForeColor = Color.FromArgb(92, 99, 114); statusCard.Controls.Add(detail);
-            versionInfo.Location = new Point(20, 65); versionInfo.Size = new Size(280, 20); versionInfo.Font = new Font(Font.FontFamily, 8.75f); versionInfo.ForeColor = Color.FromArgb(104, 111, 125); statusCard.Controls.Add(versionInfo);
-            checkUpdate.Text = "检查更新"; checkUpdate.Location = new Point(350, 51); checkUpdate.Size = new Size(91, 29); checkUpdate.Click += async delegate { await CheckUpdates(true); }; statusCard.Controls.Add(checkUpdate);
-            updateDsh.Text = "更新 DSH"; updateDsh.Location = new Point(449, 51); updateDsh.Size = new Size(98, 29); updateDsh.Visible = false; statusCard.Controls.Add(updateDsh); updateDsh.Click += async delegate { await UpdateDsh(); };
+            versionInfo.Location = new Point(20, 65); versionInfo.Size = new Size(395, 20); versionInfo.Font = new Font(Font.FontFamily, 8.75f); versionInfo.ForeColor = Color.FromArgb(104, 111, 125); statusCard.Controls.Add(versionInfo);
+            SetupSecondaryButton(checkUpdate, "检查更新", 444, 15, 103, 29); checkUpdate.Click += async delegate { await CheckUpdates(true); }; statusCard.Controls.Add(checkUpdate);
+            SetupSecondaryButton(updateDsh, "更新 DSH", 444, 50, 103, 29); updateDsh.Visible = false; statusCard.Controls.Add(updateDsh); updateDsh.Click += async delegate { await UpdateDsh(); };
 
             Controls.Add(NewLabel("工作区", 29, 192, 100, 22, 9.5f, FontStyle.Bold, Color.FromArgb(55, 61, 75)));
             workspace.Location = new Point(29, 216); workspace.Size = new Size(474, 30); workspace.Text = engine.Config.Workspace; Controls.Add(workspace);
@@ -698,6 +698,7 @@ namespace DSHWebManager
 
         private void SetBusy(bool busy) { UseWaitCursor = busy; start.Enabled = stop.Enabled = open.Enabled = browse.Enabled = checkUpdate.Enabled = updateDsh.Enabled = !busy; }
         private void SetupButton(Button b, string text, int x, int y, int width, Color back, Color fore) { b.Text = text; b.Location = new Point(x, y); b.Size = new Size(width, 42); b.FlatStyle = FlatStyle.Flat; b.FlatAppearance.BorderSize = fore == Color.White ? 0 : 1; b.FlatAppearance.BorderColor = Color.FromArgb(217, 222, 231); b.BackColor = back; b.ForeColor = fore; b.Cursor = Cursors.Hand; Controls.Add(b); }
+        private static void SetupSecondaryButton(Button b, string text, int x, int y, int width, int height) { b.Text = text; b.Location = new Point(x, y); b.Size = new Size(width, height); b.FlatStyle = FlatStyle.Flat; b.FlatAppearance.BorderSize = 1; b.FlatAppearance.BorderColor = Color.FromArgb(217, 222, 231); b.BackColor = Color.White; b.ForeColor = Color.FromArgb(48, 55, 68); b.Cursor = Cursors.Hand; }
         private static Label NewLabel(string text, int x, int y, int w, int h, float size, FontStyle style, Color color) { return new Label { Text = text, Location = new Point(x, y), Size = new Size(w, h), Font = new Font("Microsoft YaHei UI", size, style), ForeColor = color }; }
     }
 }
