@@ -1,0 +1,16 @@
+# Reproducible local build output
+build/
+release/
+
+# Local tooling and logs
+*.log
+*.user
+*.suo
+.vs/
+
+# Never publish local DSH data or managed runtimes
+.dsh/
+runtime/
+logs/
+state.json
+settings.json
