@@ -15,9 +15,9 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("DSH Web Manager")]
 [assembly: System.Reflection.AssemblyProduct("DSH Web Manager")]
-[assembly: System.Reflection.AssemblyCompany("DSH Web Manager Community Build")]
-[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.2.0.0")]
+[assembly: System.Reflection.AssemblyCompany("LVSUGARS")]
+[assembly: System.Reflection.AssemblyVersion("1.2.2.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.2.2.0")]
 
 namespace DSHWebManager
 {
@@ -175,7 +175,7 @@ namespace DSHWebManager
         {
             var request = (HttpWebRequest)WebRequest.Create("https://registry.npmjs.org/@deepseek-ai%2Fdsh/latest");
             request.Timeout = 15000;
-            request.UserAgent = "DSH-Web-Manager/1.2.0";
+            request.UserAgent = "DSH-Web-Manager/1.2.2";
             using (var response = request.GetResponse())
             using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
             {
@@ -194,6 +194,19 @@ namespace DSHWebManager
             {
                 var script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Install-DshRuntime.ps1");
                 if (!File.Exists(script)) return OperationResult.Fail("安装组件缺失，请重新安装 DSH Web Manager。\r\n\r\n缺少：" + script);
+                var targetVersion = "latest";
+                if (updateOnly)
+                {
+                    Report(progress, 5, "正在检查官方版本...");
+                    var current = FindInstallation();
+                    if (current == null || !current.Managed) return OperationResult.Fail("仅能更新由 DSH Web Manager 安装的 DSH。");
+                    targetVersion = GetLatestDshVersion();
+                    if (CompareVersions(current.Version, targetVersion) >= 0)
+                    {
+                        Report(progress, 100, "DSH 已是最新版本");
+                        return OperationResult.Success("DSH " + current.Version + " 已是官方最新版本。");
+                    }
+                }
                 var wasRunning = GetStatus().Managed;
                 if (updateOnly && wasRunning)
                 {
@@ -204,7 +217,7 @@ namespace DSHWebManager
                 }
                 Report(progress, updateOnly ? 25 : 10, updateOnly ? "正在准备新版本..." : "正在准备安装...");
                 var args = "-NoLogo -NoProfile -ExecutionPolicy Bypass -File " + Quote(script) +
-                           " -RuntimeRoot " + Quote(RuntimeDir) + (updateOnly ? " -UpdateOnly" : "");
+                           " -RuntimeRoot " + Quote(RuntimeDir) + " -DshVersion " + Quote(targetVersion) + (updateOnly ? " -UpdateOnly" : "");
                 var psi = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
@@ -554,6 +567,9 @@ namespace DSHWebManager
         private readonly CheckBox autostart = new CheckBox();
         private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
         private bool updating;
+        private string updatePhase;
+        private int updatePercent;
+        private DateTime updateStartedUtc;
 
         public MainForm(DshEngine engine)
         {
@@ -570,7 +586,7 @@ namespace DSHWebManager
             Load += async delegate { RefreshStatus(); if (engine.FindInstallation() != null) await CheckUpdates(false); };
             FormClosed += delegate { timer.Stop(); };
             timer.Interval = 3000;
-            timer.Tick += delegate { RefreshStatus(); };
+            timer.Tick += delegate { if (updating) RenderUpdateProgress(); else RefreshStatus(); };
             timer.Start();
         }
 
@@ -609,8 +625,9 @@ namespace DSHWebManager
             logs.Click += delegate { Directory.CreateDirectory(engine.LogDir); Process.Start(engine.LogDir); };
             folder.Click += delegate { if (Directory.Exists(workspace.Text)) Process.Start(workspace.Text); };
 
-            var hint = NewLabel("关闭窗口不会停止 DSH Web。程序不会删除你的 .dsh 会话或工作区。", 29, 420, 560, 22, 9, FontStyle.Regular, Color.FromArgb(112, 118, 132));
+            var hint = NewLabel("关闭窗口不会停止 DSH Web。程序不会删除你的 .dsh 会话或工作区。", 29, 420, 410, 22, 9, FontStyle.Regular, Color.FromArgb(112, 118, 132));
             Controls.Add(hint);
+            Controls.Add(NewLabel("LVSUGARS 制作", 452, 420, 139, 22, 9, FontStyle.Bold, Color.FromArgb(104, 111, 125), ContentAlignment.MiddleRight));
 
             BuildInstallPanel();
         }
@@ -630,6 +647,7 @@ namespace DSHWebManager
             installDsh.Click += async delegate { await InstallDsh(); }; installPanel.Controls.Add(installDsh);
             var installLogs = new Button { Text = "查看安装日志", Location = new Point(228, 242), Size = new Size(138, 42), FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(235, 238, 244), ForeColor = Color.FromArgb(38, 44, 56), Cursor = Cursors.Hand };
             installLogs.FlatAppearance.BorderColor = Color.FromArgb(217, 222, 231); installLogs.FlatAppearance.BorderSize = 1; installLogs.Click += delegate { Directory.CreateDirectory(engine.LogDir); Process.Start(engine.LogDir); }; installPanel.Controls.Add(installLogs);
+            installPanel.Controls.Add(NewLabel("LVSUGARS 制作", 42, 314, 536, 22, 9, FontStyle.Bold, Color.FromArgb(104, 111, 125), ContentAlignment.MiddleRight));
             Controls.Add(installPanel); installPanel.BringToFront();
         }
 
@@ -683,7 +701,7 @@ namespace DSHWebManager
 
         private async Task UpdateDsh()
         {
-            updating = true; SetBusy(true); checkUpdate.Visible = false; updateDsh.Visible = false; SetUpdateProgress(5, "正在准备更新...");
+            updating = true; updateStartedUtc = DateTime.UtcNow; SetBusy(true); checkUpdate.Visible = false; updateDsh.Visible = false; SetUpdateProgress(5, "正在准备更新...");
             var result = await Task.Run(() => engine.InstallOrUpdateManagedRuntime(true, SetUpdateProgress));
             if (result.Ok) SetUpdateProgress(100, "DSH 已更新完成");
             updating = false; updateProgress.Visible = false; checkUpdate.Visible = true; SetBusy(false); checkUpdate.Enabled = true; updateDsh.Enabled = true; RefreshStatus();
@@ -694,9 +712,21 @@ namespace DSHWebManager
         private void SetUpdateProgress(int percent, string phase)
         {
             if (InvokeRequired) { BeginInvoke(new Action<int, string>(SetUpdateProgress), percent, phase); return; }
-            updateProgress.Value = Math.Max(updateProgress.Minimum, Math.Min(updateProgress.Maximum, percent));
+            updatePercent = Math.Max(updateProgress.Minimum, Math.Min(updateProgress.Maximum, percent));
+            updatePhase = phase;
+            updateProgress.Style = percent >= 40 && percent < 70 ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous;
+            if (updateProgress.Style == ProgressBarStyle.Continuous) updateProgress.Value = updatePercent;
             updateProgress.Visible = true;
-            versionInfo.Text = phase + "  ·  " + percent + "%";
+            RenderUpdateProgress();
+        }
+
+        private void RenderUpdateProgress()
+        {
+            if (!updating || string.IsNullOrEmpty(updatePhase)) return;
+            var elapsed = DateTime.UtcNow - updateStartedUtc;
+            versionInfo.Text = updatePhase + (updateProgress.Style == ProgressBarStyle.Marquee
+                ? "  ·  已用 " + ((int)elapsed.TotalMinutes) + " 分 " + elapsed.Seconds + " 秒"
+                : "  ·  " + updatePercent + "%");
         }
 
         private async Task RunOperation(string busyText, Func<OperationResult> action)
@@ -742,6 +772,6 @@ namespace DSHWebManager
         private void SetBusy(bool busy) { UseWaitCursor = busy; start.Enabled = stop.Enabled = open.Enabled = browse.Enabled = checkUpdate.Enabled = updateDsh.Enabled = !busy; }
         private void SetupButton(Button b, string text, int x, int y, int width, Color back, Color fore) { b.Text = text; b.Location = new Point(x, y); b.Size = new Size(width, 42); b.FlatStyle = FlatStyle.Flat; b.FlatAppearance.BorderSize = fore == Color.White ? 0 : 1; b.FlatAppearance.BorderColor = Color.FromArgb(217, 222, 231); b.BackColor = back; b.ForeColor = fore; b.Cursor = Cursors.Hand; Controls.Add(b); }
         private static void SetupSecondaryButton(Button b, string text, int x, int y, int width, int height) { b.Text = text; b.Location = new Point(x, y); b.Size = new Size(width, height); b.FlatStyle = FlatStyle.Flat; b.FlatAppearance.BorderSize = 1; b.FlatAppearance.BorderColor = Color.FromArgb(217, 222, 231); b.BackColor = Color.White; b.ForeColor = Color.FromArgb(48, 55, 68); b.Cursor = Cursors.Hand; }
-        private static Label NewLabel(string text, int x, int y, int w, int h, float size, FontStyle style, Color color) { return new Label { Text = text, Location = new Point(x, y), Size = new Size(w, h), Font = new Font("Microsoft YaHei UI", size, style), ForeColor = color }; }
+        private static Label NewLabel(string text, int x, int y, int w, int h, float size, FontStyle style, Color color, ContentAlignment align = ContentAlignment.TopLeft) { return new Label { Text = text, Location = new Point(x, y), Size = new Size(w, h), Font = new Font("Microsoft YaHei UI", size, style), ForeColor = color, TextAlign = align }; }
     }
 }

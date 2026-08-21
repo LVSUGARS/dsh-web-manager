@@ -66,7 +66,7 @@ Write-ProgressStage 40 "正在安装官方 DSH，这可能需要几分钟..."
 $env:npm_config_cache = Join-Path $RuntimeRoot 'npm-cache'
 $oldErrorAction = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
-& $npmCmd install --prefix $targetDshDir --no-audit --no-fund --omit=dev "@deepseek-ai/dsh@$DshVersion" 2>&1 | Tee-Object -FilePath $log -Append | Write-Host
+& $npmCmd install --prefix $targetDshDir --no-audit --no-fund --omit=dev --prefer-offline "@deepseek-ai/dsh@$DshVersion" 2>&1 | Tee-Object -FilePath $log -Append | Write-Host
 $npmExit = $LASTEXITCODE
 $ErrorActionPreference = $oldErrorAction
 if ($npmExit -ne 0) { throw "npm install failed with exit code $npmExit. See $log" }
