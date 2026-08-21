@@ -16,8 +16,8 @@ using System.Windows.Forms;
 [assembly: System.Reflection.AssemblyTitle("DSH Web Manager")]
 [assembly: System.Reflection.AssemblyProduct("DSH Web Manager")]
 [assembly: System.Reflection.AssemblyCompany("DSH Web Manager Community Build")]
-[assembly: System.Reflection.AssemblyVersion("1.1.1.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.1.1.0")]
+[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.2.0.0")]
 
 namespace DSHWebManager
 {
@@ -32,8 +32,8 @@ namespace DSHWebManager
             var engine = new DshEngine();
             if (args.Contains("--start")) { Environment.Exit(engine.Start().Ok ? 0 : 1); }
             if (args.Contains("--stop")) { Environment.Exit(engine.Stop().Ok ? 0 : 1); }
-            if (args.Contains("--install-dsh")) { Environment.Exit(engine.InstallOrUpdateManagedRuntime(false).Ok ? 0 : 1); }
-            if (args.Contains("--update-dsh")) { Environment.Exit(engine.InstallOrUpdateManagedRuntime(true).Ok ? 0 : 1); }
+            if (args.Contains("--install-dsh")) { Environment.Exit(engine.InstallOrUpdateManagedRuntime(false, null).Ok ? 0 : 1); }
+            if (args.Contains("--update-dsh")) { Environment.Exit(engine.InstallOrUpdateManagedRuntime(true, null).Ok ? 0 : 1); }
             if (args.Contains("--self-test")) { Environment.Exit(engine.SelfTest() ? 0 : 1); }
             Application.Run(new MainForm(engine));
         }
@@ -112,10 +112,12 @@ namespace DSHWebManager
             try
             {
                 SaveConfig();
+                int progress; string stage;
                 return Directory.Exists(DataDir) && FindInstallation() != null &&
                        CompareVersions("0.1.0-rc.6", "0.1.0-rc.7") < 0 &&
                        CompareVersions("0.1.0-rc.7", "0.1.0") < 0 &&
-                       CompareVersions("1.0.0", "1.0.0") == 0;
+                       CompareVersions("1.0.0", "1.0.0") == 0 &&
+                       ProgressEvent("DSH_PROGRESS:75:正在验证 DSH", out progress, out stage) && progress == 75 && stage == "正在验证 DSH";
             }
             catch { return false; }
         }
@@ -173,7 +175,7 @@ namespace DSHWebManager
         {
             var request = (HttpWebRequest)WebRequest.Create("https://registry.npmjs.org/@deepseek-ai%2Fdsh/latest");
             request.Timeout = 15000;
-            request.UserAgent = "DSH-Web-Manager/1.1.1";
+            request.UserAgent = "DSH-Web-Manager/1.2.0";
             using (var response = request.GetResponse())
             using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
             {
@@ -185,7 +187,7 @@ namespace DSHWebManager
             }
         }
 
-        public OperationResult InstallOrUpdateManagedRuntime(bool updateOnly)
+        public OperationResult InstallOrUpdateManagedRuntime(bool updateOnly, Action<int, string> progress)
         {
             var stoppedForUpdate = false;
             try
@@ -195,10 +197,12 @@ namespace DSHWebManager
                 var wasRunning = GetStatus().Managed;
                 if (updateOnly && wasRunning)
                 {
+                    Report(progress, 12, "正在停止当前 DSH Web...");
                     var stopped = Stop();
                     if (!stopped.Ok) return stopped;
                     stoppedForUpdate = true;
                 }
+                Report(progress, updateOnly ? 25 : 10, updateOnly ? "正在准备新版本..." : "正在准备安装...");
                 var args = "-NoLogo -NoProfile -ExecutionPolicy Bypass -File " + Quote(script) +
                            " -RuntimeRoot " + Quote(RuntimeDir) + (updateOnly ? " -UpdateOnly" : "");
                 var psi = new ProcessStartInfo
@@ -213,22 +217,34 @@ namespace DSHWebManager
                 };
                 using (var process = Process.Start(psi))
                 {
-                    var stdoutTask = process.StandardOutput.ReadToEndAsync();
-                    var stderrTask = process.StandardError.ReadToEndAsync();
+                    var lastOutput = "";
+                    var lastError = "";
+                    process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
+                    {
+                        if (string.IsNullOrWhiteSpace(e.Data)) return;
+                        lastOutput = e.Data;
+                        int percent; string stage;
+                        if (ProgressEvent(e.Data, out percent, out stage)) Report(progress, percent, stage);
+                    };
+                    process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
+                    {
+                        if (!string.IsNullOrWhiteSpace(e.Data)) lastError = e.Data;
+                    };
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
                     process.WaitForExit();
-                    Task.WaitAll(stdoutTask, stderrTask);
-                    var stdout = stdoutTask.Result;
-                    var stderr = stderrTask.Result;
                     if (process.ExitCode != 0)
-                        return FailedInstall("DSH 安装失败。\r\n\r\n" + LastUsefulLine(stderr + "\r\n" + stdout) + "\r\n\r\n可在日志目录查看 runtime-install.log。", stoppedForUpdate);
+                        return FailedInstall("DSH 安装失败。\r\n\r\n" + LastUsefulLine(lastError + "\r\n" + lastOutput) + "\r\n\r\n可在日志目录查看 runtime-install.log。", stoppedForUpdate);
                 }
                 var installation = FindInstallation();
                 if (installation == null || !installation.Managed) return FailedInstall("安装已结束，但没有检测到受管 DSH CLI。请查看安装日志。", stoppedForUpdate);
                 if (updateOnly && wasRunning)
                 {
+                    Report(progress, 95, "正在重启 DSH Web...");
                     var started = Start();
                     if (!started.Ok) return OperationResult.Fail("DSH 已更新，但 Web 未能重新启动：\r\n" + started.Message);
                 }
+                Report(progress, 100, updateOnly ? "DSH 已更新完成" : "DSH 安装完成");
                 return OperationResult.Success(updateOnly ? "DSH 已更新到 " + installation.Version + "。" : "DSH " + installation.Version + " 安装完成。");
             }
             catch (Exception ex) { return FailedInstall((updateOnly ? "更新" : "安装") + "失败：" + ex.Message, stoppedForUpdate); }
@@ -247,6 +263,20 @@ namespace DSHWebManager
         {
             var lines = (text ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             return lines.Length == 0 ? "没有可用的错误详情。" : lines[lines.Length - 1].Trim();
+        }
+
+        private static void Report(Action<int, string> progress, int percent, string stage)
+        {
+            if (progress != null) progress(percent, stage);
+        }
+
+        internal static bool ProgressEvent(string line, out int percent, out string stage)
+        {
+            percent = 0; stage = "";
+            const string prefix = "DSH_PROGRESS:";
+            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith(prefix, StringComparison.Ordinal)) return false;
+            var parts = line.Substring(prefix.Length).Split(new[] { ':' }, 2);
+            return parts.Length == 2 && int.TryParse(parts[0], out percent) && percent >= 0 && percent <= 100 && (stage = parts[1]).Length > 0;
         }
 
         public static int CompareVersions(string left, string right)
@@ -519,16 +549,18 @@ namespace DSHWebManager
         private readonly Button updateDsh = new Button();
         private readonly Button installDsh = new Button();
         private readonly Label versionInfo = new Label();
+        private readonly ProgressBar updateProgress = new ProgressBar();
         private readonly Panel installPanel = new Panel();
         private readonly CheckBox autostart = new CheckBox();
         private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+        private bool updating;
 
         public MainForm(DshEngine engine)
         {
             this.engine = engine;
             Text = "DSH Web Manager";
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-            ClientSize = new Size(620, 438);
+            ClientSize = new Size(620, 456);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
@@ -548,35 +580,36 @@ namespace DSHWebManager
             Controls.Add(title);
             Controls.Add(NewLabel("本地 DSH Web 控制台", 29, 51, 300, 20, 9.5f, FontStyle.Regular, Color.FromArgb(104, 111, 125)));
 
-            var statusCard = new Panel { Location = new Point(28, 80), Size = new Size(564, 92), BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            var statusCard = new Panel { Location = new Point(28, 80), Size = new Size(564, 110), BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             Controls.Add(statusCard);
             dot.Location = new Point(21, 22); dot.Size = new Size(11, 11); statusCard.Controls.Add(dot);
             status.Location = new Point(43, 13); status.Size = new Size(330, 27); status.Font = new Font(Font.FontFamily, 11, FontStyle.Bold); statusCard.Controls.Add(status);
             detail.Location = new Point(43, 40); detail.Size = new Size(340, 22); detail.ForeColor = Color.FromArgb(92, 99, 114); statusCard.Controls.Add(detail);
             versionInfo.Location = new Point(20, 65); versionInfo.Size = new Size(395, 20); versionInfo.Font = new Font(Font.FontFamily, 8.75f); versionInfo.ForeColor = Color.FromArgb(104, 111, 125); statusCard.Controls.Add(versionInfo);
+            updateProgress.Location = new Point(20, 88); updateProgress.Size = new Size(527, 8); updateProgress.Minimum = 0; updateProgress.Maximum = 100; updateProgress.Visible = false; statusCard.Controls.Add(updateProgress);
             SetupSecondaryButton(checkUpdate, "检查更新", 444, 15, 103, 29); checkUpdate.Click += async delegate { await CheckUpdates(true); }; statusCard.Controls.Add(checkUpdate);
             SetupSecondaryButton(updateDsh, "更新 DSH", 444, 50, 103, 29); updateDsh.Visible = false; statusCard.Controls.Add(updateDsh); updateDsh.Click += async delegate { await UpdateDsh(); };
 
-            Controls.Add(NewLabel("工作区", 29, 192, 100, 22, 9.5f, FontStyle.Bold, Color.FromArgb(55, 61, 75)));
-            workspace.Location = new Point(29, 216); workspace.Size = new Size(474, 30); workspace.Text = engine.Config.Workspace; Controls.Add(workspace);
-            browse.Text = "选择..."; browse.Location = new Point(515, 215); browse.Size = new Size(76, 32); browse.Click += Browse_Click; Controls.Add(browse);
+            Controls.Add(NewLabel("工作区", 29, 210, 100, 22, 9.5f, FontStyle.Bold, Color.FromArgb(55, 61, 75)));
+            workspace.Location = new Point(29, 234); workspace.Size = new Size(474, 30); workspace.Text = engine.Config.Workspace; Controls.Add(workspace);
+            browse.Text = "选择..."; browse.Location = new Point(515, 233); browse.Size = new Size(76, 32); browse.Click += Browse_Click; Controls.Add(browse);
 
-            Controls.Add(NewLabel("端口", 29, 264, 80, 22, 9.5f, FontStyle.Bold, Color.FromArgb(55, 61, 75)));
-            port.Location = new Point(29, 288); port.Size = new Size(100, 30); port.Minimum = 1024; port.Maximum = 65535; port.Value = Math.Max(1024, Math.Min(65535, engine.Config.Port)); Controls.Add(port);
-            autostart.Text = "登录 Windows 后自动启动 DSH Web"; autostart.Location = new Point(160, 288); autostart.Size = new Size(310, 28); autostart.Checked = engine.IsAutostartEnabled(); autostart.CheckedChanged += Autostart_CheckedChanged; Controls.Add(autostart);
+            Controls.Add(NewLabel("端口", 29, 282, 80, 22, 9.5f, FontStyle.Bold, Color.FromArgb(55, 61, 75)));
+            port.Location = new Point(29, 306); port.Size = new Size(100, 30); port.Minimum = 1024; port.Maximum = 65535; port.Value = Math.Max(1024, Math.Min(65535, engine.Config.Port)); Controls.Add(port);
+            autostart.Text = "登录 Windows 后自动启动 DSH Web"; autostart.Location = new Point(160, 306); autostart.Size = new Size(310, 28); autostart.Checked = engine.IsAutostartEnabled(); autostart.CheckedChanged += Autostart_CheckedChanged; Controls.Add(autostart);
 
-            SetupButton(start, "启动", 29, 340, 106, Color.FromArgb(45, 99, 235), Color.White);
-            SetupButton(stop, "停止", 145, 340, 106, Color.FromArgb(214, 65, 65), Color.White);
-            SetupButton(open, "打开网页", 261, 340, 122, Color.FromArgb(235, 238, 244), Color.FromArgb(38, 44, 56));
-            var logs = new Button(); SetupButton(logs, "日志", 393, 340, 91, Color.FromArgb(235, 238, 244), Color.FromArgb(38, 44, 56));
-            var folder = new Button(); SetupButton(folder, "工作区", 494, 340, 97, Color.FromArgb(235, 238, 244), Color.FromArgb(38, 44, 56));
+            SetupButton(start, "启动", 29, 358, 106, Color.FromArgb(45, 99, 235), Color.White);
+            SetupButton(stop, "停止", 145, 358, 106, Color.FromArgb(214, 65, 65), Color.White);
+            SetupButton(open, "打开网页", 261, 358, 122, Color.FromArgb(235, 238, 244), Color.FromArgb(38, 44, 56));
+            var logs = new Button(); SetupButton(logs, "日志", 393, 358, 91, Color.FromArgb(235, 238, 244), Color.FromArgb(38, 44, 56));
+            var folder = new Button(); SetupButton(folder, "工作区", 494, 358, 97, Color.FromArgb(235, 238, 244), Color.FromArgb(38, 44, 56));
             start.Click += async delegate { await RunOperation("正在启动...", engine.Start); };
             stop.Click += async delegate { await RunOperation("正在停止...", engine.Stop); };
             open.Click += delegate { Process.Start(engine.CurrentUrl); };
             logs.Click += delegate { Directory.CreateDirectory(engine.LogDir); Process.Start(engine.LogDir); };
             folder.Click += delegate { if (Directory.Exists(workspace.Text)) Process.Start(workspace.Text); };
 
-            var hint = NewLabel("关闭窗口不会停止 DSH Web。程序不会删除你的 .dsh 会话或工作区。", 29, 402, 560, 22, 9, FontStyle.Regular, Color.FromArgb(112, 118, 132));
+            var hint = NewLabel("关闭窗口不会停止 DSH Web。程序不会删除你的 .dsh 会话或工作区。", 29, 420, 560, 22, 9, FontStyle.Regular, Color.FromArgb(112, 118, 132));
             Controls.Add(hint);
 
             BuildInstallPanel();
@@ -603,7 +636,7 @@ namespace DSHWebManager
         private async Task InstallDsh()
         {
             installDsh.Enabled = false; installDsh.Text = "正在安装..."; UseWaitCursor = true;
-            var result = await Task.Run(() => engine.InstallOrUpdateManagedRuntime(false));
+            var result = await Task.Run(() => engine.InstallOrUpdateManagedRuntime(false, null));
             UseWaitCursor = false; installDsh.Enabled = true; installDsh.Text = "安装官方 DSH"; RefreshStatus();
             if (!result.Ok) MessageBox.Show(this, result.Message, "DSH Web Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else await CheckUpdates(false);
@@ -650,11 +683,20 @@ namespace DSHWebManager
 
         private async Task UpdateDsh()
         {
-            SetBusy(true); checkUpdate.Enabled = false; updateDsh.Enabled = false; versionInfo.Text = "正在更新 DSH...";
-            var result = await Task.Run(() => engine.InstallOrUpdateManagedRuntime(true));
-            SetBusy(false); checkUpdate.Enabled = true; updateDsh.Enabled = true; RefreshStatus();
+            updating = true; SetBusy(true); checkUpdate.Visible = false; updateDsh.Visible = false; SetUpdateProgress(5, "正在准备更新...");
+            var result = await Task.Run(() => engine.InstallOrUpdateManagedRuntime(true, SetUpdateProgress));
+            if (result.Ok) SetUpdateProgress(100, "DSH 已更新完成");
+            updating = false; updateProgress.Visible = false; checkUpdate.Visible = true; SetBusy(false); checkUpdate.Enabled = true; updateDsh.Enabled = true; RefreshStatus();
             if (!result.Ok) MessageBox.Show(this, result.Message, "DSH Web Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else { MessageBox.Show(this, result.Message, "DSH Web Manager", MessageBoxButtons.OK, MessageBoxIcon.Information); await CheckUpdates(false); }
+        }
+
+        private void SetUpdateProgress(int percent, string phase)
+        {
+            if (InvokeRequired) { BeginInvoke(new Action<int, string>(SetUpdateProgress), percent, phase); return; }
+            updateProgress.Value = Math.Max(updateProgress.Minimum, Math.Min(updateProgress.Maximum, percent));
+            updateProgress.Visible = true;
+            versionInfo.Text = phase + "  ·  " + percent + "%";
         }
 
         private async Task RunOperation(string busyText, Func<OperationResult> action)
@@ -684,6 +726,7 @@ namespace DSHWebManager
 
         private void RefreshStatus()
         {
+            if (updating) return;
             var installation = engine.FindInstallation();
             installPanel.Visible = installation == null;
             if (installation == null) { timer.Stop(); return; }

@@ -45,7 +45,7 @@ foreach ($path in $shortcuts) {
 $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\DSHWebManager'
 New-Item -Path $uninstallKey -Force | Out-Null
 Set-ItemProperty -Path $uninstallKey -Name DisplayName -Value 'DSH Web Manager'
-Set-ItemProperty -Path $uninstallKey -Name DisplayVersion -Value '1.1.1'
+Set-ItemProperty -Path $uninstallKey -Name DisplayVersion -Value '1.2.0'
 Set-ItemProperty -Path $uninstallKey -Name Publisher -Value 'DSH Web Manager Community Build'
 Set-ItemProperty -Path $uninstallKey -Name InstallLocation -Value $installDir
 Set-ItemProperty -Path $uninstallKey -Name DisplayIcon -Value (Join-Path $installDir 'DSHWebManager.exe')

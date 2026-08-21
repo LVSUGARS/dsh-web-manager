@@ -29,6 +29,11 @@ function Write-Stage([string] $Message) {
     $line | Tee-Object -FilePath $log -Append | Write-Host
 }
 
+function Write-ProgressStage([int] $Percent, [string] $Message) {
+    Write-Stage $Message
+    Write-Output ("DSH_PROGRESS:{0}:{1}" -f $Percent, $Message)
+}
+
 if (-not (Test-Path -LiteralPath $nodeExe -PathType Leaf)) {
     if ($UpdateOnly) { throw 'Managed Node.js runtime is missing.' }
     $archiveName = "node-$NodeVersion-win-x64.zip"
@@ -36,7 +41,7 @@ if (-not (Test-Path -LiteralPath $nodeExe -PathType Leaf)) {
     $archive = Join-Path $RuntimeRoot $archiveName
     $checksums = Join-Path $RuntimeRoot 'SHASUMS256.txt'
     $extract = Join-Path $RuntimeRoot 'node-extract'
-    Write-Stage "Downloading official Node.js $NodeVersion..."
+    Write-ProgressStage 15 "正在下载官方 Node.js..."
     Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/$archiveName" -OutFile $archive
     Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/SHASUMS256.txt" -OutFile $checksums
     $line = Get-Content -LiteralPath $checksums | Where-Object { $_ -match "^[0-9a-fA-F]{64}\s+$([regex]::Escape($archiveName))$" } | Select-Object -First 1
@@ -44,7 +49,7 @@ if (-not (Test-Path -LiteralPath $nodeExe -PathType Leaf)) {
     $expected = ($line -split '\s+')[0].ToUpperInvariant()
     $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToUpperInvariant()
     if ($actual -ne $expected) { throw "Node.js checksum mismatch. Expected $expected, got $actual." }
-    Write-Stage 'Node.js checksum verified. Extracting...'
+    Write-ProgressStage 25 'Node.js 校验通过，正在解压...'
     Remove-Item -LiteralPath $extract -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Path $extract | Out-Null
     Expand-Archive -LiteralPath $archive -DestinationPath $extract
@@ -57,7 +62,7 @@ if (-not (Test-Path -LiteralPath $nodeExe -PathType Leaf)) {
 }
 
 if (-not (Test-Path -LiteralPath $npmCmd -PathType Leaf)) { throw "npm.cmd is missing: $npmCmd" }
-Write-Stage "Installing official @deepseek-ai/dsh@$DshVersion... This can take several minutes."
+Write-ProgressStage 40 "正在安装官方 DSH，这可能需要几分钟..."
 $env:npm_config_cache = Join-Path $RuntimeRoot 'npm-cache'
 $oldErrorAction = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
@@ -66,6 +71,7 @@ $npmExit = $LASTEXITCODE
 $ErrorActionPreference = $oldErrorAction
 if ($npmExit -ne 0) { throw "npm install failed with exit code $npmExit. See $log" }
 if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) { throw "DSH CLI was not created: $cli" }
+Write-ProgressStage 70 '正在验证 DSH 安装...'
 Push-Location $targetDshDir
 try {
     $pendingJson = & $npmCmd approve-scripts --allow-scripts-pending --json 2>&1
@@ -76,13 +82,14 @@ try {
     if ($unexpected.Count) { throw "DSH added unreviewed install scripts: $($unexpected -join ', '). Update DSH Web Manager before continuing." }
     $approved = @($pending | Where-Object { $_ -in $allowed })
     if ($approved.Count) {
-        Write-Stage "Approving reviewed DSH dependency scripts: $($approved -join ', ')"
+        Write-ProgressStage 78 "正在完成已审核的 DSH 依赖..."
         & $npmCmd approve-scripts @approved 2>&1 | Tee-Object -FilePath $log -Append | Write-Host
         if ($LASTEXITCODE -ne 0) { throw "Approved dependency scripts failed with exit code $LASTEXITCODE. See $log" }
     }
 } finally { Pop-Location }
 $package = Get-Content -LiteralPath (Join-Path $targetDshDir 'node_modules\@deepseek-ai\dsh\package.json') -Raw | ConvertFrom-Json
 if ($UpdateOnly) {
+    Write-ProgressStage 88 '正在切换新版本 DSH...'
     $backupDshDir = Join-Path $RuntimeRoot 'dsh-previous'
     Remove-Item -LiteralPath $backupDshDir -Recurse -Force -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $dshDir) { Move-Item -LiteralPath $dshDir -Destination $backupDshDir }
@@ -101,4 +108,4 @@ if ($UpdateOnly) {
     dshVersion = $package.version
     completedUtc = [DateTime]::UtcNow.ToString('o')
 } | ConvertTo-Json | Set-Content -LiteralPath $ready -Encoding UTF8
-Write-Stage "DSH runtime ready: $($package.version)"
+Write-ProgressStage 93 "DSH 运行时已就绪：$($package.version)"
