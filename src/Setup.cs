@@ -8,8 +8,8 @@ using System.Windows.Forms;
 [assembly: AssemblyTitle("DSH Web Launcher Setup")]
 [assembly: AssemblyProduct("DSH Web Launcher")]
 [assembly: AssemblyCompany("LVSUGARS")]
-    [assembly: AssemblyVersion("1.4.0.0")]
-    [assembly: AssemblyFileVersion("1.4.0.0")]
+    [assembly: AssemblyVersion("1.5.0.0")]
+    [assembly: AssemblyFileVersion("1.5.0.0")]
 
 namespace DSHWebManagerSetup
 {
@@ -27,7 +27,7 @@ namespace DSHWebManagerSetup
                     "安装 DSH Web 启动器", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                 if (result != DialogResult.OK) return;
             }
-            var temp = Path.Combine(Path.GetTempPath(), "dsh-web-manager-" + Guid.NewGuid().ToString("N"));
+            var temp = Path.Combine(Path.GetTempPath(), "dsh-web-launcher-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(temp);
             try
             {

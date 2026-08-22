@@ -1,8 +1,8 @@
-# DSH Web Manager Design
+# DSH Web Launcher Design
 
 ## Architecture
 
-- `DSHWebManager.exe`: .NET Framework 4.8 WinForms application built with the Windows inbox C# compiler.
+- `DSHWebLauncher.exe`: .NET Framework 4.8 WinForms application built with the Windows inbox C# compiler.
 - Per-user configuration: `%LOCALAPPDATA%\DSHWebManager\config.json`.
 - Runtime state and logs: `%LOCALAPPDATA%\DSHWebManager\state.json` and `logs\`.
 - Managed runtime: `%LOCALAPPDATA%\DSHWebManager\runtime`, containing checksum-verified Node.js and the official npm DSH package.

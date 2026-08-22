@@ -35,7 +35,7 @@ The first DSH installation needs an internet connection, generally takes 5–20 
 
 ## Update behavior
 
-The manager checks npm's official `latest` metadata for `@deepseek-ai/dsh` asynchronously. A managed update checks the official version again before doing any work, so an already-current installation is never reinstalled. A newer runtime is installed and validated before the old one is replaced. If updating fails, the previous runtime is preserved and the original web service is restarted.
+The launcher checks npm's official `latest` metadata for `@deepseek-ai/dsh` asynchronously. A managed update checks the official version again before doing any work, so an already-current installation is never reinstalled. A newer runtime is installed and validated before the old one is replaced. If updating fails, the previous runtime is preserved and the original web service is restarted.
 
 The progress bar represents those actual stages rather than download bytes. The installation stage shows elapsed time while npm processes roughly 450 dependencies and native modules; a first update can take 15–30 minutes. Use **Logs** for detailed output.
 
@@ -46,7 +46,7 @@ External npm, PATH, or WinGet installations are always read-only from this appli
 | Data | Location / behavior |
 | --- | --- |
 | Launcher settings, state, logs | `%LOCALAPPDATA%\DSHWebManager` |
-| Program files | `%LOCALAPPDATA%\Programs\DSH Web Manager` (legacy-compatible location) |
+| Program files | `%LOCALAPPDATA%\Programs\DSH Web Launcher` |
 | Managed Node.js and DSH runtime | `%LOCALAPPDATA%\DSHWebManager\runtime` |
 | DSH sessions and credentials | `%USERPROFILE%\.dsh`, never read, bundled, or removed by this project |
 | Workspace folders | Used only as the DSH working directory and never deleted on uninstall |
@@ -56,8 +56,8 @@ External npm, PATH, or WinGet installations are always read-only from this appli
 Requirements: Windows, the .NET Framework 4.8 C# compiler, and PowerShell. No NuGet packages are needed.
 
 ```powershell
-git clone https://github.com/LVSUGARS/dsh-web-manager.git
-cd dsh-web-manager
+git clone https://github.com/LVSUGARS/dsh-web-launcher.git
+cd dsh-web-launcher
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 

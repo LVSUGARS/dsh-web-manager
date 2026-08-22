@@ -18,8 +18,8 @@ using System.Windows.Forms;
 [assembly: System.Reflection.AssemblyTitle("DSH Web Launcher")]
 [assembly: System.Reflection.AssemblyProduct("DSH Web Launcher")]
 [assembly: System.Reflection.AssemblyCompany("LVSUGARS")]
-[assembly: System.Reflection.AssemblyVersion("1.4.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.4.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.5.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.5.0.0")]
 
 namespace DSHWebManager
 {
@@ -181,7 +181,7 @@ namespace DSHWebManager
         {
             var request = (HttpWebRequest)WebRequest.Create("https://registry.npmjs.org/@deepseek-ai%2Fdsh/latest");
             request.Timeout = 15000;
-            request.UserAgent = "DSH-Web-Launcher/1.4.0";
+            request.UserAgent = "DSH-Web-Launcher/1.5.0";
             using (var response = request.GetResponse())
             using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
             {

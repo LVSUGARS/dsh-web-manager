@@ -61,7 +61,7 @@ DSH Web 本身依赖 Node.js、CLI 安装、工作区路径和本地端口。对
 | 内容 | 位置 / 行为 |
 | --- | --- |
 | 启动器配置、状态、日志 | `%LOCALAPPDATA%\DSHWebManager` |
-| 启动器程序文件 | `%LOCALAPPDATA%\Programs\DSH Web Manager`（为兼容旧版保留路径） |
+| 启动器程序文件 | `%LOCALAPPDATA%\Programs\DSH Web Launcher` |
 | 受管 Node.js 与 DSH 运行时 | `%LOCALAPPDATA%\DSHWebManager\runtime` |
 | DSH 会话、账号和凭据 | `%USERPROFILE%\.dsh`，本工具不读取、不打包、不删除 |
 | 选择的工作区 | 仅作为启动目录使用，卸载时不会删除 |
@@ -73,8 +73,8 @@ DSH Web 本身依赖 Node.js、CLI 安装、工作区路径和本地端口。对
 环境要求：Windows、.NET Framework 4.8 的 C# 编译器，以及 PowerShell。无需安装 NuGet 包。
 
 ```powershell
-git clone https://github.com/LVSUGARS/dsh-web-manager.git
-cd dsh-web-manager
+git clone https://github.com/LVSUGARS/dsh-web-launcher.git
+cd dsh-web-launcher
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 ```
 
