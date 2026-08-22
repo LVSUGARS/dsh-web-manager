@@ -1,6 +1,10 @@
 # Reproducible local build output
 build/
 release/
+build-v2/
+release-v2/
+src-v2/**/bin/
+src-v2/**/obj/
 
 # Local tooling and logs
 *.log
@@ -14,3 +18,7 @@ runtime/
 logs/
 state.json
 settings.json
+# Local packaged output at repo root
+/DSH-Web-Launcher-*.zip
+/DSH-Web-Launcher-*.zip.sha256
+/artifacts/

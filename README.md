@@ -6,15 +6,24 @@
 
 > 非官方独立项目，与 DeepSeek 或 DSH 官方团队不存在隶属或背书关系。本项目不会替代 DSH；它只调用和管理用户自行选择安装的官方 CLI。
 
-![DSH Web 启动器深色宽屏界面：状态、工作区、端口与本地控制操作](assets/screenshots/launcher-dark-wide.png)
+![DSH Web 启动器开屏粒子 Logo](assets/screenshots/splash-particle.png)
 
-![DSH Web 启动器浅色界面：支持深浅主题切换](assets/screenshots/launcher-light.png)
+![DSH Web 启动器主控制台](assets/screenshots/main-console-dark.png)
 
 ## 它解决什么问题
 
 DSH Web 本身依赖 Node.js、CLI 安装、工作区路径和本地端口。对 Windows 用户来说，这几个步骤往往散落在终端、浏览器和任务管理器里。DSH Web Manager 将日常操作集中为：选择工作区、点击启动、打开网页；需要时还可以查看日志、关闭受管进程或更新受管 DSH。
 
 ## 功能
+
+### 2.0 WPF 预发布构建
+
+`src-v2/` 是新版 WPF 界面和 Core 引擎，提供状态驱动首页、设置页、关于/更新页、系统托盘关闭策略、版本显示和 GitHub Release 更新检查。`Build-V2.ps1` 可生成自包含 Windows x64 便携包、SHA-256 校验文件和 2.0 安装器。当前 1.5.0 WinForms 构建仍保留作为回滚基线，2.0 尚未替换正式安装版。
+
+- 关闭窗口可选择最小化到托盘或退出启动器，并支持记住选择。
+- DSH Web 启动成功后自动打开浏览器的行为可在设置中调整。
+- 启动器更新自动检查但必须手动确认安装，并先做 SHA-256 校验。
+- 启动器更新不会修改 `.dsh` 会话、凭据或用户工作区。
 
 - **一键安装官方 DSH**：缺少 CLI 时，按需下载 Node.js，校验官方 SHA-256，再通过 npm 安装 `@deepseek-ai/dsh`。
 - **本地 Web 控制**：启动后仅监听 `127.0.0.1`，可直接打开 Web 控制台；支持自定义端口与工作区。
@@ -84,10 +93,12 @@ powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\Build.ps1
 
 ```text
 src/        WinForms 管理器与自解压安装器源码
+src-v2/     WPF 2.0 界面、Core 引擎与更新流程
 installer/  每用户安装、卸载、受管运行时安装脚本
 assets/     图标与 README 截图
 specs/      需求、设计与实施清单
 Build.ps1   本地构建脚本
+Build-V2.ps1  WPF 2.0 x64 构建、发布与校验脚本
 ```
 
 ## 常见问题

@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [string] $SourceDir = $PSScriptRoot,
-    [switch] $NoLaunch
+    [switch] $NoLaunch,
+    [string] $ProductVersion = '2.0.1'
 )
 
 Set-StrictMode -Version Latest
@@ -53,7 +54,7 @@ $uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\DSHWe
 Remove-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\DSHWebManager' -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -Path $uninstallKey -Force | Out-Null
 Set-ItemProperty -Path $uninstallKey -Name DisplayName -Value 'DSH Web 启动器 / DSH Web Launcher'
-Set-ItemProperty -Path $uninstallKey -Name DisplayVersion -Value '1.5.0'
+Set-ItemProperty -Path $uninstallKey -Name DisplayVersion -Value $ProductVersion
 Set-ItemProperty -Path $uninstallKey -Name Publisher -Value 'LVSUGARS'
 Set-ItemProperty -Path $uninstallKey -Name InstallLocation -Value $installDir
 Set-ItemProperty -Path $uninstallKey -Name DisplayIcon -Value (Join-Path $installDir 'DSHWebLauncher.exe')
