@@ -35,7 +35,7 @@ $legacyShortcuts = @(
 )
 foreach ($path in $legacyShortcuts) { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue }
 foreach ($path in $shortcuts) {
-    $shortcut = $shell.CreateShortcut($path)
+    $shortcut = $shell.CreateShortcut([string]$path)
     if ($path -like '*卸载*') {
         $shortcut.TargetPath = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
         $shortcut.Arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $installDir 'Uninstall.ps1') + '"'
