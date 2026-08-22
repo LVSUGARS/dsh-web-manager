@@ -15,9 +15,13 @@ if (Test-Path -LiteralPath $manager -PathType Leaf) {
     if (-not $stop.WaitForExit(15000)) { $stop.Kill() }
 }
 Get-Process -Name 'DSHWebManager' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-$startupLink = Join-Path ([Environment]::GetFolderPath('Startup')) 'DSH Web Manager.lnk'
+$startupLink = Join-Path ([Environment]::GetFolderPath('Startup')) 'DSH Web 启动器.lnk'
 $paths = @(
     $startupLink,
+    (Join-Path ([Environment]::GetFolderPath('Startup')) 'DSH Web Manager.lnk'),
+    (Join-Path ([Environment]::GetFolderPath('Desktop')) 'DSH Web 启动器.lnk'),
+    (Join-Path ([Environment]::GetFolderPath('Programs')) 'DSH Web 启动器.lnk'),
+    (Join-Path ([Environment]::GetFolderPath('Programs')) '卸载 DSH Web 启动器.lnk'),
     (Join-Path ([Environment]::GetFolderPath('Desktop')) 'DSH Web Manager.lnk'),
     (Join-Path ([Environment]::GetFolderPath('Programs')) 'DSH Web Manager.lnk'),
     (Join-Path ([Environment]::GetFolderPath('Programs')) 'Uninstall DSH Web Manager.lnk')
@@ -42,6 +46,6 @@ Start-Process -FilePath $cleanup -WindowStyle Hidden
 
 if (-not $Quiet) {
     [System.Windows.Forms.MessageBox]::Show(
-        'DSH Web Manager was removed. Your .dsh data, workspaces, settings, and logs were preserved.',
-        'DSH Web Manager', 'OK', 'Information') | Out-Null
+        'DSH Web 启动器 was removed. Your .dsh data, workspaces, settings, and logs were preserved.',
+        'DSH Web 启动器', 'OK', 'Information') | Out-Null
 }

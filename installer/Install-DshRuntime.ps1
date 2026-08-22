@@ -79,7 +79,7 @@ try {
     $pending = @((($pendingJson -join [Environment]::NewLine) | ConvertFrom-Json).allowScripts | ForEach-Object { $_.name })
     $allowed = @('@deepseek-ai/dsh-subprocess-local', '@google/genai', 'koffi', 'node-pty', 'protobufjs')
     $unexpected = @($pending | Where-Object { $_ -notin $allowed })
-    if ($unexpected.Count) { throw "DSH added unreviewed install scripts: $($unexpected -join ', '). Update DSH Web Manager before continuing." }
+    if ($unexpected.Count) { throw "DSH added unreviewed install scripts: $($unexpected -join ', '). Update DSH Web Launcher before continuing." }
     $approved = @($pending | Where-Object { $_ -in $allowed })
     if ($approved.Count) {
         Write-ProgressStage 78 "正在完成已审核的 DSH 依赖..."

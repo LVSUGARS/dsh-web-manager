@@ -1,12 +1,14 @@
-# DSH Web Manager
+# DSH Web 启动器
 
 [English](README.en.md) | **简体中文**
 
-面向 Windows 的 DSH Web 本地控制台。它把官方 `@deepseek-ai/dsh` CLI 的安装、启动、停止、更新检测和工作区配置收进一个轻量桌面窗口，适合不想手动敲命令或维护 Node.js 环境的用户。由 [LVSUGARS](https://github.com/LVSUGARS) 制作与维护。
+面向 Windows 的 DSH Web 本地启动器。它把官方 `@deepseek-ai/dsh` CLI 的安装、启动、停止、更新检测和工作区配置收进一个轻量桌面窗口，适合不想手动敲命令或维护 Node.js 环境的用户。由 [LVSUGARS](https://github.com/LVSUGARS) 制作与维护。
 
 > 非官方独立项目，与 DeepSeek 或 DSH 官方团队不存在隶属或背书关系。本项目不会替代 DSH；它只调用和管理用户自行选择安装的官方 CLI。
 
-![DSH Web Manager 主控台：显示 DSH 运行状态、版本、更新检查、工作区和端口设置](assets/screenshots/main-console-zh.png)
+![DSH Web 启动器深色宽屏界面：状态、工作区、端口与本地控制操作](assets/screenshots/launcher-dark-wide.png)
+
+![DSH Web 启动器浅色界面：支持深浅主题切换](assets/screenshots/launcher-light.png)
 
 ## 它解决什么问题
 
@@ -23,19 +25,22 @@ DSH Web 本身依赖 Node.js、CLI 安装、工作区路径和本地端口。对
 - **外部安装只读**：检测到 PATH 或全局 npm 中已有 DSH 时，可以使用并显示版本，但不会擅自更新或删除。
 - **安全停止**：只有 PID、启动时间、CLI 路径和命令行均与本工具记录一致时才会停止进程，避免误杀其他 Node 服务。
 - **登录后启动**：可选创建当前用户的 Windows 启动项。
+- **自适应桌面布局**：`4:3` 保持紧凑信息密度；`16:9`、`16:10` 与全屏使用横向工作台布局，操作区和工作区随可用空间重排。
+- **深浅主题与双语**：深色/浅色主题与中英文可一键切换并保存在本机配置中；深色使用白色鲸鱼图标，浅色使用黑色图标。
+- **原生窗口体验**：自绘窗口控制按“最小化、最大化/恢复、关闭”排列，支持拖拽、缩放和全屏。
 
 ## 下载与安装
 
 请前往 [Releases](../../releases/latest) 下载最新版：
 
-- `DSH-Web-Manager-Setup-*.exe`：推荐。当前 Windows 用户安装，不需要管理员权限，会创建桌面与开始菜单快捷方式。
-- `DSH-Web-Manager-*.zip`：便携包。解压后运行 `Install.cmd`，或直接使用其中的程序文件。
+- `DSH-Web-Launcher-Setup-*.exe`：推荐。当前 Windows 用户安装，不需要管理员权限，会创建桌面与开始菜单快捷方式。
+- `DSH-Web-Launcher-*.zip`：便携包。解压后运行 `Install.cmd`，或直接使用其中的程序文件。
 
 首次点击“安装官方 DSH”需要联网，通常需要 5–20 分钟，并约占用 350 MB 磁盘空间。安装器未进行代码签名，Windows SmartScreen 可能显示未知发布者提示；请仅从本仓库的 Release 页面下载。
 
 ## 快速开始
 
-1. 打开 `DSH Web Manager`。
+1. 打开 `DSH Web 启动器`。
 2. 若尚未安装 DSH，点击“安装官方 DSH”并等待完成。
 3. 选择一个工作区目录，保持端口 `3080`，或按需修改。
 4. 点击“启动”，状态变为“运行中”后点击“打开网页”。
@@ -55,8 +60,8 @@ DSH Web 本身依赖 Node.js、CLI 安装、工作区路径和本地端口。对
 
 | 内容 | 位置 / 行为 |
 | --- | --- |
-| 管理器配置、状态、日志 | `%LOCALAPPDATA%\DSHWebManager` |
-| 管理器程序文件 | `%LOCALAPPDATA%\Programs\DSH Web Manager` |
+| 启动器配置、状态、日志 | `%LOCALAPPDATA%\DSHWebManager` |
+| 启动器程序文件 | `%LOCALAPPDATA%\Programs\DSH Web Manager`（为兼容旧版保留路径） |
 | 受管 Node.js 与 DSH 运行时 | `%LOCALAPPDATA%\DSHWebManager\runtime` |
 | DSH 会话、账号和凭据 | `%USERPROFILE%\.dsh`，本工具不读取、不打包、不删除 |
 | 选择的工作区 | 仅作为启动目录使用，卸载时不会删除 |
@@ -97,4 +102,4 @@ Build.ps1   本地构建脚本
 
 欢迎提交 Issue 和 Pull Request。请勿提交 `.dsh`、工作区、日志、账号令牌或其他个人数据。
 
-`DSH Web Manager` 是一个由 [LVSUGARS](https://github.com/LVSUGARS) 制作的社区工具；DeepSeek Harness、`@deepseek-ai/dsh` 及其相关标识归各自权利人所有。
+`DSH Web 启动器` 是一个由 [LVSUGARS](https://github.com/LVSUGARS) 制作的社区工具；DeepSeek Harness、`@deepseek-ai/dsh` 及其相关标识归各自权利人所有。

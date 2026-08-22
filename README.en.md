@@ -1,12 +1,14 @@
-# DSH Web Manager
+# DSH Web Launcher
 
 **English** | [简体中文](README.md)
 
-A lightweight Windows desktop control panel for the official DeepSeek Harness (DSH) Web CLI. It helps users install, start, stop, inspect, and update DSH Web without manually maintaining a Node.js setup or terminal commands. Created and maintained by [LVSUGARS](https://github.com/LVSUGARS).
+A lightweight Windows desktop launcher for the official DeepSeek Harness (DSH) Web CLI. It helps users install, start, stop, inspect, and update DSH Web without manually maintaining a Node.js setup or terminal commands. Created and maintained by [LVSUGARS](https://github.com/LVSUGARS).
 
 > This is an independent community project. It is not affiliated with, endorsed by, or maintained by DeepSeek or the DSH team. It manages the official `@deepseek-ai/dsh` CLI; it is not a replacement for DSH itself.
 
-![DSH Web Manager main console](assets/screenshots/main-console-zh.png)
+![DSH Web Launcher, dark wide layout](assets/screenshots/launcher-dark-wide.png)
+
+![DSH Web Launcher, light theme](assets/screenshots/launcher-light.png)
 
 ## Highlights
 
@@ -17,12 +19,14 @@ A lightweight Windows desktop control panel for the official DeepSeek Harness (D
 - Shows real update stages for preparation, installation, validation, switching, and restart. During npm installation it shows an active indicator and elapsed time rather than inventing a byte percentage.
 - Stops a service only after validating the PID, process start time, CLI path, and command line.
 - Keeps `%USERPROFILE%\.dsh`, credentials, conversations, and selected workspaces outside the application's install and removal paths.
+- Uses a compact layout for `4:3` windows and a wider workspace layout for `16:9`, `16:10`, and fullscreen windows.
+- Includes persistent light/dark themes, bilingual UI, and vector window controls in the standard minimize, maximize/restore, close order.
 
 ## Download and use
 
 Download the latest `Setup EXE` or portable ZIP from [Releases](../../releases/latest). Installation is per-user and does not require administrator privileges.
 
-1. Open the manager.
+1. Open the launcher.
 2. Select **Install official DSH** if no CLI is detected.
 3. Choose a workspace and port.
 4. Select **Start**, then **Open web page**.
@@ -41,8 +45,8 @@ External npm, PATH, or WinGet installations are always read-only from this appli
 
 | Data | Location / behavior |
 | --- | --- |
-| Manager settings, state, logs | `%LOCALAPPDATA%\DSHWebManager` |
-| Program files | `%LOCALAPPDATA%\Programs\DSH Web Manager` |
+| Launcher settings, state, logs | `%LOCALAPPDATA%\DSHWebManager` |
+| Program files | `%LOCALAPPDATA%\Programs\DSH Web Manager` (legacy-compatible location) |
 | Managed Node.js and DSH runtime | `%LOCALAPPDATA%\DSHWebManager\runtime` |
 | DSH sessions and credentials | `%USERPROFILE%\.dsh`, never read, bundled, or removed by this project |
 | Workspace folders | Used only as the DSH working directory and never deleted on uninstall |

@@ -5,11 +5,11 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Windows.Forms;
 
-[assembly: AssemblyTitle("DSH Web Manager Setup")]
-[assembly: AssemblyProduct("DSH Web Manager")]
+[assembly: AssemblyTitle("DSH Web Launcher Setup")]
+[assembly: AssemblyProduct("DSH Web Launcher")]
 [assembly: AssemblyCompany("LVSUGARS")]
-[assembly: AssemblyVersion("1.2.2.0")]
-[assembly: AssemblyFileVersion("1.2.2.0")]
+    [assembly: AssemblyVersion("1.4.0.0")]
+    [assembly: AssemblyFileVersion("1.4.0.0")]
 
 namespace DSHWebManagerSetup
 {
@@ -23,8 +23,8 @@ namespace DSHWebManagerSetup
             if (!quiet)
             {
                 var result = MessageBox.Show(
-                    "将为当前 Windows 用户安装 DSH Web Manager。\r\n\r\n安装不需要管理员权限，也不会修改或删除 .dsh 会话和工作区。",
-                    "安装 DSH Web Manager", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                    "将为当前 Windows 用户安装 DSH Web 启动器（DSH Web Launcher）。\r\n\r\n安装不需要管理员权限，也不会修改或删除 .dsh 会话和工作区。",
+                    "安装 DSH Web 启动器", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                 if (result != DialogResult.OK) return;
             }
             var temp = Path.Combine(Path.GetTempPath(), "dsh-web-manager-" + Guid.NewGuid().ToString("N"));
@@ -48,7 +48,7 @@ namespace DSHWebManagerSetup
                 var stderr = process.StandardError.ReadToEnd();
                 process.WaitForExit();
                 if (process.ExitCode != 0) throw new InvalidOperationException("安装脚本退出码：" + process.ExitCode + "\r\n" + stderr + "\r\n" + stdout);
-                if (!quiet) MessageBox.Show("安装完成。桌面和开始菜单中已添加 DSH Web Manager。", "DSH Web Manager", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!quiet) MessageBox.Show("安装完成。桌面和开始菜单中已添加 DSH Web 启动器。", "DSH Web 启动器", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -59,7 +59,7 @@ namespace DSHWebManagerSetup
                     File.WriteAllText(Path.Combine(logDir, "setup-error.log"), ex.ToString());
                 }
                 catch { }
-                if (!quiet) MessageBox.Show("安装失败：" + ex.Message, "DSH Web Manager", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!quiet) MessageBox.Show("安装失败：" + ex.Message, "DSH Web 启动器", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Environment.ExitCode = 1;
             }
             finally { try { Directory.Delete(temp, true); } catch { } }
